@@ -17,4 +17,4 @@ typedef struct {
     size_t payload_length;
 } decoded_packet;
 
-decode_status decode_packet(const uint8_t *data, size_t captured_length, decoded_packet *out);
+decode_status decode_packet(const uint8_t *data, size_t captured_length, int link_type, decoded_packet *out);

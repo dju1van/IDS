@@ -1,6 +1,7 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <string.h>
+#include "decoder.h"
 
 // Function to check if a network interface is up and running
 static int is_interface_usable(const pcap_if_t *dev) {
@@ -73,10 +74,9 @@ int select_interface(char *out_name, size_t out_name_size) {
 
 // Function for packet callback, called for each captured packet
 static void packet_callback(u_char *user, const struct pcap_pkthdr *header, const u_char *bytes) {
-    (void)user; // Unused parameter
-    (void)bytes; // Unused parameter
-    // Print the length of the captured packet
-    printf("Captured a packet with length of %u bytes.\n", header->caplen);
+    int link_type = *(const int *)user;
+    decoded_packet decoded;
+    (void)decode_packet(bytes, header->caplen, link_type, &decoded);
 }
 
 // Function to start packet capture on the specified network interface
@@ -90,17 +90,17 @@ int start_capture(const char *dev_name) {
         fprintf(stderr, "Could not open device %s: %s\n", dev_name, errbuf);
         return -1;
     }
-
     printf("Starting packet capture on interface: %s\n", dev_name);
-
+    // Get the data link type of the opened interface
+    int link_type = pcap_datalink(handle);
     // Start capturing packets and call the packet_callback function for each captured packet
-    if(pcap_loop(handle, 0, packet_callback, NULL) < 0) {
+    if(pcap_loop(handle, 0, packet_callback, (u_char *)&link_type) < 0) {
         fprintf(stderr, "Error during packet capture: %s\n", pcap_geterr(handle));
         pcap_close(handle);
         return -1;
     }
-
     // Close the handle after capturing is done
     pcap_close(handle);
+
     return 0;
 }

@@ -4,7 +4,7 @@
 
 #define INTERFACE_NAME 256
 
-int main(int argc, char *argv[]) {
+int main() {
     char interface_name[INTERFACE_NAME];
     // Select the network interface to capture packets from
     if(select_interface(interface_name, INTERFACE_NAME)) {
