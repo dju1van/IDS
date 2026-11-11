@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "decoder.h"
+#include "session.h"
 
 // Function to check if a network interface is up and running
 static int is_interface_usable(const pcap_if_t *dev) {
@@ -76,7 +77,12 @@ int select_interface(char *out_name, size_t out_name_size) {
 static void packet_callback(u_char *user, const struct pcap_pkthdr *header, const u_char *bytes) {
     int link_type = *(const int *)user;
     decoded_packet decoded;
-    (void)decode_packet(bytes, header->caplen, link_type, &decoded);
+    decode_status status = decode_packet(bytes, header->caplen, link_type, &decoded);
+    // If decoding is successful relay the decoded packet to the session module
+    if(status == DECODE_OK) {
+        // Call the session module to handle the decoded packet
+        session_handle_packet(&decoded, &header->ts);
+    }
 }
 
 // Function to start packet capture on the specified network interface
